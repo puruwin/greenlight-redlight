@@ -1,7 +1,8 @@
 module Game exposing (..)
 
-import Html exposing (Html, div, text)
+import Html exposing (Html, div, p, img, text)
 import Browser
+import Html.Attributes exposing (class, src, width)
 
 
 -- Model
@@ -10,8 +11,7 @@ type alias Model =
   , score : Int
   , highScore : Int
   , remainingLives : Int
-}
-
+  }
 
 init : Model
 init =
@@ -19,7 +19,7 @@ init =
   , score = 0
   , highScore = 0
   , remainingLives = 3
-}
+  }
 
 -- Update
 type Msg
@@ -34,7 +34,31 @@ update msg model =
 -- View
 view : Model -> Html Msg
 view model =
-  div [] [ text "Hello, Elm!" ]
+  div [] [
+    div [ class "header" ]
+    [ div [ class "welcome" ]
+      [ p [ class "welcome-text" ] [
+        text "Welcome to the game!"
+        ]
+      ]
+      , div [ class "logout" ] [
+        div [ class "logout-btn" ] []
+      ]
+    ]
+  , div [ class "wrapper" ] [
+    p [ class "highscore" ] [
+      text "Highscore: "
+    ]
+    , img [ src "/assets/img/red-light.png", width 100 ] []
+    , p [ class "current-score" ] [
+      text "Score: "
+    ]
+    , div [ class "steps" ] [
+        div [ class "left-step-btn" ] []
+      , div [ class "right-step-btn" ] []
+    ]
+  ]
+  ]
 
 -- Main
 main : Program () Model Msg
