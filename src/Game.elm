@@ -3,6 +3,7 @@ module Game exposing (..)
 import Html exposing (Html, div, p, img, text)
 import Browser
 import Html.Attributes exposing (class, src, width)
+import Html.Events exposing (onClick)
 
 
 -- Model
@@ -24,12 +25,15 @@ init =
 -- Update
 type Msg
   = NoOp
+  | ClickedStep
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
     NoOp ->
       model
+    ClickedStep ->
+      ( { model | score = model.score + 1 } )
 
 -- View
 view : Model -> Html Msg
@@ -51,11 +55,11 @@ view model =
     ]
     , img [ src "/assets/img/red-light.png", width 100 ] []
     , p [ class "current-score" ] [
-      text "Score: "
+      text ("Score: " ++ String.fromInt model.score)
     ]
     , div [ class "steps" ] [
-        div [ class "left-step-btn" ] []
-      , div [ class "right-step-btn" ] []
+        div [ class "left-step-btn", onClick ClickedStep ] []
+      , div [ class "right-step-btn", onClick ClickedStep ] []
     ]
   ]
   ]
