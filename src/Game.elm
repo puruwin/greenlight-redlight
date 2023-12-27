@@ -4,6 +4,9 @@ import Html exposing (Html, div, p, img, text)
 import Browser
 import Html.Attributes exposing (class, src, width)
 import Html.Events exposing (onClick)
+import Time
+import Process
+import Task
 
 
 -- Model
@@ -12,28 +15,31 @@ type alias Model =
   , score : Int
   , highScore : Int
   , remainingLives : Int
+  , greenLight : Bool
   }
 
-init : Model
-init =
+initialModel : Model
+initialModel =
   { username = "puruwin"
   , score = 0
   , highScore = 0
   , remainingLives = 3
+  , greenLight = True
   }
 
 -- Update
 type Msg
-  = NoOp
-  | ClickedStep
+  = ClickedStep
+  | SwitchLights
 
-update : Msg -> Model -> Model
+
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    NoOp ->
-      model
     ClickedStep ->
-      ( { model | score = model.score + 1 } )
+      ( { model | score = model.score + 1 }, Cmd.none )
+    SwitchLights ->
+      ( model, changeTrafficLights ( { model | greenLight = not model.greenLight } ) )
 
 -- View
 view : Model -> Html Msg
@@ -53,7 +59,12 @@ view model =
     p [ class "highscore" ] [
       text "Highscore: "
     ]
-    , img [ src "/assets/img/red-light.png", width 100 ] []
+    , img [ src (
+            if model.greenLight then
+                "/assets/img/green-light.png"
+            else 
+                "/assets/img/red-light.png"
+            ), width 100 ] []
     , p [ class "current-score" ] [
       text ("Score: " ++ String.fromInt model.score)
     ]
@@ -64,11 +75,26 @@ view model =
   ]
   ]
 
+
+changeTrafficLights : Model -> Cmd Msg
+changeTrafficLights model =
+    if model.greenLight then
+        Process.sleep 3000
+        |> Task.perform ( \_ -> SwitchLights )
+    else
+        Process.sleep 6000 
+        |> Task.perform ( \_ -> SwitchLights )
+
+init : () -> (Model, Cmd Msg)
+init _ =
+  ( initialModel, changeTrafficLights initialModel )
+
 -- Main
 main : Program () Model Msg
 main =
-  Browser.sandbox
+  Browser.element
     { init = init
     , update = update
     , view = view
+    , subscriptions = \_ -> Sub.none
     }
