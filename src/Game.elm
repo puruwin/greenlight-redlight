@@ -17,6 +17,7 @@ type alias Model =
   , remainingLives : Int
   , greenLight : Bool
   , randomSeed : Int
+  , lastStep : Maybe Step
   }
 
 initialModel : Model
@@ -27,23 +28,38 @@ initialModel =
   , remainingLives = 3
   , greenLight = False
   , randomSeed = 0
+  , lastStep = Nothing
   }
 
 -- Update
 type Msg
-  = ClickedStep
+  = ClickedStep Step
   | SwitchLights
   | NewSeed Int
 
+type Step
+  = LeftStep
+  | RightStep
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    ClickedStep ->
+    ClickedStep step ->
       if model.greenLight then
-        ( { model | score = model.score + 1 }, Cmd.none )
+        let
+          newScore =
+            case model.lastStep of
+              Just lastStep ->
+                if lastStep /= step then
+                  model.score + 1
+                else
+                  model.score - 1
+              Nothing ->
+                model.score + 1
+        in
+        ( { model | score = newScore, lastStep = Just step }, Cmd.none )
       else
-        ( { model | score = model.score - 1 }, Cmd.none )
+        ( { model | score = 0 }, Cmd.none )
 
     SwitchLights ->
       let
@@ -83,8 +99,8 @@ view model =
       text ("Score: " ++ String.fromInt model.score)
     ]
     , div [ class "steps" ] [
-        div [ class "left-step-btn", onClick ClickedStep ] []
-      , div [ class "right-step-btn", onClick ClickedStep ] []
+        div [ class "left-step-btn", onClick (ClickedStep LeftStep) ] []
+      , div [ class "right-step-btn", onClick (ClickedStep RightStep) ] []
     ]
   ]
   ]
