@@ -40,7 +40,10 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     ClickedStep ->
-      ( { model | score = model.score + 1 }, Cmd.none )
+      if model.greenLight then
+        ( { model | score = model.score + 1 }, Cmd.none )
+      else
+        ( { model | score = model.score - 1 }, Cmd.none )
 
     SwitchLights ->
       let
