@@ -1,0 +1,22 @@
+{
+  "name": "greenlight-redlight",
+  "version": "1.0.0",
+  "description": "Green light - red light game written in Elm.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/puruwin/greenlight-redlight.git"
+  },
+  "author": "David Perez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/puruwin/greenlight-redlight/issues"
+  },
+  "homepage": "https://github.com/puruwin/greenlight-redlight#readme",
+  "dependencies": {
+    "firebase": "^10.7.1"
+  }
+}

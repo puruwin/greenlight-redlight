@@ -1,49 +1,110 @@
-module Game exposing (..)
+port module Game exposing (..)
 
-import Html exposing (Html, div, p, img, text)
 import Browser
+import Html exposing (Html, div, p, img, text, button)
 import Html.Attributes exposing (class, src, width)
 import Html.Events exposing (onClick)
+import Element exposing (el, centerX, centerY, layout)
+import FireStore exposing (Error(..))
+import FireStore.Config as Config
+import FireStore.Decode as FSDecode
+import FireStore.Encode as FSEncode
+import FireStore.Query as Query
 import Random exposing (int)
 import Process
 import Task
+import Firestore
+
+---- Ports ----
 
 
--- Model
+port signIn : () -> Cmd msg
+
+
+---- Model ----
+
+
+type alias Score =
+  Int
+
+
+type alias User =
+  { email : String
+  , uid : String
+  }
+
+
+type alias Stats =
+  { score : Score
+  , highScore : Score
+  }
+
+
+type alias ErrorData =
+  { code : String
+  , message : String
+  , credential : String
+  }
+
+
+
 type alias Model = 
-  { username : String
-  , score : Int
-  , highScore : Int
-  , remainingLives : Int
+  { firestore : Firestore.Firestore
+  , stats : WebData (Firestorde.Document Stats)
+  , currentScore : Score
+  , highscore : Score
+  , user : WebData User
   , greenLight : Bool
   , randomSeed : Int
   , lastStep : Maybe Step
   }
 
-initialModel : Model
-initialModel =
-  { username = "puruwin"
-  , score = 0
+
+type alias Flags =
+  ( String, String )
+
+
+initialState : Firestore.Firestore -> Model
+initialState firestore =
+  { firestore = firestore
+  , stats = NotAsked
+  , currentScore = 0
   , highScore = 0
-  , remainingLives = 3
+  , user = NotAsked
   , greenLight = False
   , randomSeed = 0
   , lastStep = Nothing
   }
 
--- Update
+init : Flags -> ( Model, Cmd Msg )
+init ( apiKey, project ) =
+  ( initialState
+    ( Firestore.init <| Config.new { apiKey = apiKey, project = project })
+  , Task.perform SetTime Time.now
+  )
+
+
+---- Update ----
+
+
 type Msg
-  = ClickedStep Step
+  = LogIn
+  | ClickedStep Step
   | SwitchLights
   | NewSeed Int
+
 
 type Step
   = LeftStep
   | RightStep
 
+
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    LogIn ->
+      ( model, signIn () )
+
     ClickedStep step ->
       if model.greenLight then
         let
@@ -52,8 +113,10 @@ update msg model =
               Just lastStep ->
                 if lastStep /= step then
                   model.score + 1
+
                 else
                   model.score - 1
+
               Nothing ->
                 model.score + 1
         in
@@ -71,9 +134,20 @@ update msg model =
       ( { model | randomSeed = seed }, Cmd.none )
 
 
--- View
+---- View ----
 view : Model -> Html Msg
-view model =
+view ({ stats } as model) =
+  case stats of
+    NotAsked ->
+      el [ centerY, centerX ] <|
+        button [ onClick Just LogIn ] [ text "Sign in with Google" ]
+    
+    Success stats ->
+      viewGame model
+
+
+viewGame : Model -> Html Msg
+viewGame model =
   div [] [
     div [ class "header" ]
     [ div [ class "welcome" ]
