@@ -99,6 +99,7 @@ type Msg
   | SwitchLights
   | NewSeed Int
   | SetTime Posix
+  | FetchStats (Result Firestore.Error (List (Firestore.Query Stats)))
 
 
 type Step
@@ -115,12 +116,13 @@ fetchStats model =
           query =
             Query.new
               |> Query.collection "stats"
-              |> Query.where_ "uid" Query.Equal uid
+              |> Query.where_ (uid Query.Equal "uid")
+
         in
         model.firestore
           |> Firestore.root
           |> Firestore.collection "user"
-          |> Firestore.document uid
+          |> Firestore.document "uid"
           |> Firestore.build
           |> Result.toTask
           |> Task.andThen (Firestore.runQuery decoder query)
@@ -140,7 +142,7 @@ update msg model =
     LoggedInData (Ok user) ->
       case model.stats of
         NotAsked ->
-          fetchHighscore { model | user = Success user }
+          fetchStats { model | user = Success user }
         
         _ ->
           ( model, Cmd.none )
@@ -180,7 +182,7 @@ view ({ stats } as model) =
   case stats of
     NotAsked ->
       div [ class "wrapper" ] [
-        button [ onClick (Just LogIn) ] [ text "Sign in with Google" ]
+        button [ onClick (LogIn) ] [ text "Sign in with Google" ]
       ]
 
     Failure message ->
@@ -245,7 +247,6 @@ decoder =
     FSDecode.document Stats
         |> FSDecode.required "highscore" FSDecode.string
         |> FSDecode.required "uid" FSDecode.string
-        |> FSDecode.required "date" FSDecode.timestamp
 
 
 httpErrorToString : Http.Error -> String
@@ -273,7 +274,7 @@ newSeed =
 
 
 ---- Main ----
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
   Browser.element
     { init = init
